@@ -967,6 +967,11 @@ function addBlock(parent, cls, heading, items, extraEl){
   parent.appendChild(block);
 }
 
+/* убираем повторы: одинаковый текст рекомендации показываем один раз */
+const uniqueByText = items => {
+  const seen = new Set();
+  return items.filter(i => seen.has(i.text) ? false : (seen.add(i.text), true));
+};
 const noteItem = c => ({ text: c.answer.note, link: c.answer.noteLink, linkText: c.answer.noteLinkText });
 const recItem  = c => ({ text: c.answer.recommendation, link: c.answer.link, linkText: c.answer.linkText, linkParts: c.answer.linkParts });
 
@@ -1001,8 +1006,10 @@ function renderResults(){
     addBlock(body, 'grey', danger.length ? TEXTS.headRiskExtra : TEXTS.headRisk,
       risky.filter(c => c.answer.note).map(noteItem));
 
-    // 4) рекомендации: сначала к опасным ответам, потом к рискованным
-    const recs = [...danger, ...risky].filter(c => c.answer.recommendation).map(recItem);
+    // 4) рекомендации ко ВСЕМ ответам пользователя:
+    //    сначала к опасным (вопрос 6 первым), затем все остальные по порядку вопросов
+    const rest = all.filter(c => c.answer.level !== 'danger');
+    const recs = uniqueByText([...danger, ...rest].filter(c => c.answer.recommendation).map(recItem));
     const noConclusion = danger.some(c => c.answer.noConclusion);
     let conclusion = null;
     if (!noConclusion){
@@ -1014,8 +1021,8 @@ function renderResults(){
   } else {
     // всё хорошо: благоприятные обстоятельства + полезные рекомендации (благоприятные и нейтральные ответы)
     addBlock(body, 'grey', TEXTS.headGood, good.filter(c => c.answer.note).map(noteItem));
-    const recs = [...good, ...neutral].sort((a, b) => a.qIndex - b.qIndex)
-      .filter(c => c.answer.recommendation).map(recItem);
+    const recs = uniqueByText([...good, ...neutral].sort((a, b) => a.qIndex - b.qIndex)
+      .filter(c => c.answer.recommendation).map(recItem));
     addBlock(body, 'outline-orange', TEXTS.headRecGood, recs);
   }
 }
