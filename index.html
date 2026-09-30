@@ -171,6 +171,7 @@
   }
   .result-block li .li-content{display:flex;flex-direction:column;gap:12px;}
   .result-block li .li-body{white-space:pre-line;}
+  .result-block li .li-body strong{font-weight:600;}
   .result-block li .read-more-link{font-weight:600;color:var(--orange);text-decoration:underline;cursor:pointer;}
   .result-block li .read-more-link:hover{color:var(--orange-active);}
   .result-block li .read-more-line{font-weight:600;color:var(--orange);}
@@ -251,6 +252,7 @@
    note           — текст в блок обстоятельств (нет поля — ничего не выводим)
    noteLink / noteLinkText — ссылка под текстом обстоятельства
    recommendation — текст в блок рекомендаций (нет поля — ничего не выводим)
+   recommendationBold — жирная строка с новой строки после рекомендации
    link / linkText — ссылка под рекомендацией (по умолчанию «Читать подробнее»)
    linkParts      — строка с несколькими ссылками: [{text}, {text, href}, ...]
 
@@ -417,7 +419,8 @@ const QUESTIONS = [
     answers: [
       { label: 'Работник относится к одной из категорий', level: 'danger', noConclusion: true,
         note: 'Вы сокращаете работника, который имеет иммунитет от увольнения по инициативе работодателя. Это строго запрещено. Увольнение признают незаконным.',
-        recommendation: 'Увольнение нужно отменить, поскольку работник имеет иммунитет от сокращения. Если еще не издавали приказ об увольнении и не ознакомили с ним работника, отмените сокращение приказом. Если увольнение уже произведено, письменно предложите работнику вернуться. В одностороннем порядке приказ не отменяйте.\nПри других сокращениях учтите также следующие рекомендации, подготовленные на основании ваших ответов.' },
+        recommendation: 'Увольнение нужно отменить, поскольку работник имеет иммунитет от сокращения. Если еще не издавали приказ об увольнении и не ознакомили с ним работника, отмените сокращение приказом. Если увольнение уже произведено, письменно предложите работнику вернуться. В одностороннем порядке приказ не отменяйте.',
+        recommendationBold: 'При других сокращениях учтите также следующие рекомендации, подготовленные на основании ваших ответов.' },
       { label: 'Работник не относится ни к одной из категорий', level: 'neutral',
         recommendation: 'Накануне увольнения уточните у работника, не изменился ли его статус. Работница могла забеременеть, стать одинокой матерью и т.д.' },
       { label: 'Работник не относится ни к одной из категорий, но является членом избирательной комиссии', level: 'risk',
@@ -924,6 +927,12 @@ function bulletList(items){
     const body = document.createElement('span');
     body.className = 'li-body';
     body.textContent = item.text;
+    if (item.bold){
+      body.appendChild(document.createElement('br'));
+      const strong = document.createElement('strong');
+      strong.textContent = item.bold;
+      body.appendChild(strong);
+    }
     content.appendChild(body);
     if (item.linkParts && item.linkParts.some(p => p.href)){
       const line = document.createElement('div');
@@ -973,7 +982,7 @@ const uniqueByText = items => {
   return items.filter(i => seen.has(i.text) ? false : (seen.add(i.text), true));
 };
 const noteItem = c => ({ text: c.answer.note, link: c.answer.noteLink, linkText: c.answer.noteLinkText });
-const recItem  = c => ({ text: c.answer.recommendation, link: c.answer.link, linkText: c.answer.linkText, linkParts: c.answer.linkParts });
+const recItem  = c => ({ text: c.answer.recommendation, link: c.answer.link, linkText: c.answer.linkText, linkParts: c.answer.linkParts, bold: c.answer.recommendationBold });
 
 function renderResults(){
   const all = collected.flat(); // уже в порядке вопросов
